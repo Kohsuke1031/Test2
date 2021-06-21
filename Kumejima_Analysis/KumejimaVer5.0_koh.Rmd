@@ -1,0 +1,497 @@
+---
+title: "Project2020:Portofolio Okinawa Kumejima"
+subtitle: "TEST1"
+date: "Last compiled on `r format(Sys.time())`"
+author: "Kohsuke Nakamura, gaku Ihsimura (Iwate University)"
+abstract: "TEST"
+
+##  Must put a space between setting: ××
+output: 
+ rmdformats::html_clean:
+     highlight: "kate"
+     code_folding: "hide"
+     number_sections: true
+     toc_depth: 2
+     font_adjustment: -1
+     fig_width: 10
+     fig_height: 6
+    
+# html_clean default
+#html_clean(
+#  fig_width = 6,
+#  fig_height = 6,
+#  fig_caption = TRUE,
+#  highlight = "kate",
+#  lightbox = TRUE,
+#  thumbnails = TRUE,
+#  gallery = FALSE,
+#  toc = TRUE,
+#  toc_depth = 2,
+#  use_bookdown = FALSE,
+#  pandoc_args = NULL,
+#  md_extensions = NULL,
+#  mathjax = "rmdformats",
+#  ...)
+
+
+---
+<!-- gaku's style CSS fromat!　gakuStyle_Ver1.0  with  rmdformats::html_clean:
+https://en.wikipedia.org/wiki/Blue-gray#Variations_of_blue-gray  
+https://github.com/juba/rmdformats/blob/master/man/html_clean.Rd
+-->　
+
+<style>
+#main .nav-pills > li.active > a,
+#main .nav-pills > li.active > a:hover,
+#main .nav-pills > li.active > a:focus {
+    background-color: #8C92AC;        }
+#main .nav-pills > li > a:hover {
+    background-color: #8C92AC;   }
+h1, h2, h3, h4, h5, h6, legend {
+    color: #8C92AC;             }
+#nav-top span.glyphicon {
+    color: #8C92AC;       }
+#table-of-contents header {
+    color: #5D8AA8;         }
+#table-of-contents h2 {
+    background-color: #22983B; }
+#main a {
+    background-image: linear-gradient(180deg,#d64a70,#d64a70);
+    color: #c7254e;}
+a:hover {
+    color: #3d1308;
+}
+a:visited {
+    color: #3d1308;
+}
+
+#content {
+    max-width: 80%; 
+}
+
+#table-of-contents {
+color:orange;
+background: grey !important; 
+}
+
+/* Whole document: */
+body{ 
+    font-size: 12pt; 
+} 
+/* Headers */
+h1{ 
+    font-size: 18pt; 
+} 
+
+h2{ 
+    font-size: 14pt; 
+} 
+
+
+
+
+</style>
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print='100')
+opts_chunk$set(echo=FALSE,
+                 cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Section 1: Project Memo & Log
+
+[21 Sep 2020:gaku]　ポートフォリオ効果を入れ込む: Section 
+
+
+# Section 2: Code Memo & Log
+
+## (a) Reference:General
+- [Rmarkdown format guide](https://bookdown.org/yihui/rmarkdown/)
+
+- [The tidyverse style guide by Hadly Wickam](https://style.tidyverse.org/)
+
+- [Aesthetic sepecifications](https://ggplot2.tidyverse.org/articles/ggplot2-specs.html)
+
+## (b) Reference:Section Specific 
+<!-- Example 1 　- [Section ...  ]　××××××　 -->　
+<!-- Example 2 　- [Section ×　Portfolio Simulation  ]　××××××　 -->　
+
+
+## (c) Remarks/注意事項
+<!-- Example 1 　** ** bold and Section number + reasons 　 -->　
++ **Do NOT run these sections as default: defaultでは走らせないセクション:**
+ 
+## (d) Code log　/コードメモ
+<!-- Example 1 　- [13 May 2020:gaku]石川レポートの初期版提出後にコード整理のために学志がVer.8.0を作成　 -->　
+<!--　section   # 上位１０魚魚種とその他に分ける   set as no run ⇐　for simulation    -->
+
+# Section 3:パッケージ読み込み
+```{r echo=TRUE}
+#解析処理に関するセットアップ、パッケージの読み込みなど
+rm(list = ls(all.names = TRUE))
+
+# General 
+library(tidyverse)
+library(ggthemes)
+#library(googlesheets4)
+
+# General but exciplicit purposes
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(readr)
+
+library(DT)
+library(data.table)
+
+# Specific library
+library(ggsci)
+library(gridExtra)
+library(grid)
+library(gtable)
+library(viridis)
+
+#library(ecofolio)
+library(MuMIn)
+
+# load fucntions
+source("Kumejima_Function.R")
+source("gakuGeneral_functions.R")
+source("Portfolio_Effect_gaku.R")
+```
+
+
+#全魚種
+# section 4:データ読み込み
+```{r}
+Kumejima_ALL <- readRDS("./Working_Data/Kumejima/Kumejima_All_Data_6Oct20.rds") %>% 
+    filter(!Fishery_Type == "aquaculture") %>% 
+    filter(!Year == 2020)
+
+Kumejima_ALL <- as_tibble(Kumejima_ALL)
+
+glimpse(Kumejima_ALL)
+```
+
+
+
+#  Portfolio Effects
+## 魚種ごとの時系列データ
+```{r}
+#ポーチフォリオから取り除く魚種
+#Excluded_Fish_Species <- c("サワラ")
+
+
+#Catch_Data
+Temp_Fish_Catch1 <- Kumejima_ALL %>% 
+   #filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Catch_kg) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Catch = sum(Catch_kg),.groups = "drop") %>% 
+  spread(key = "Fish_Name_JP",value = Catch)
+
+Temp_Fish_Catch1[is.na(Temp_Fish_Catch1)] <- 1.0 * 10 ^ (-10)
+
+#Value_Data
+Temp_Fish_Value1 <- Kumejima_ALL%>% 
+  # filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Value_JPY) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Value = sum(Value_JPY),.groups = "drop") %>% 
+  as.data.frame(as.numeric(Temp_Fish_Value2$Value)) %>% 
+  spread(key = "Fish_Name_JP",value = Value)
+
+Temp_Fish_Value1[is.na(Temp_Fish_Value1)] <- 1.0 * 10 ^ (-10)
+
+
+```
+
+
+
+## Average-CV PE
+```{r}
+# Catch
+Kumejima_AV_CV_PE1 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Catch1,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE1) <- " "
+
+Kumejima_AV_CV_PE1 <- Kumejima_AV_CV_PE1 %>% 
+   gather(key = "Type",value = "PE_Catch") %>% 
+  mutate(Cluclate = "Average-CV PE")
+
+
+#Value
+Kumejima_AV_CV_PE2 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Value1,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE2) <- " "
+
+Kumejima_AV_CV_PE2 <- Kumejima_AV_CV_PE2 %>% 
+   gather(key = "Type",value = "PE_Value") %>% 
+  mutate(Cluclating = "Average-CV PE")
+
+Kumejima_AV_CV_PE_All <- cbind(Kumejima_AV_CV_PE1,Kumejima_AV_CV_PE2)
+Kumejima_AV_CV_PE_All <- Kumejima_AV_CV_PE_All[c(-3,-4)]
+Kumejima_AV_CV_PE_All <- mutate(Kumejima_AV_CV_PE_All,Data_Source = "全魚種")
+Kumejima_AV_CV_PE_All <- Kumejima_AV_CV_PE_All[c(5,4,1,2,3)]
+
+```
+
+##########################
+
+#きはだ抜き
+# section 4:データ読み込み
+```{r}
+Kumejima2 <- readRDS("./Working_Data/Kumejima/Kumejima_All_Data_6Oct20.rds") %>% 
+    filter(!Fishery_Type == "aquaculture") %>% 
+    filter(!Year == 2020) %>% 
+  filter(!Fish_Name_JP == "キハダマグロ")
+
+Kumejima2 <- as_tibble(Kumejima2)
+
+glimpse(Kumejima2)
+```
+
+
+#  Portfolio Effects
+## 魚種ごとの時系列データ
+```{r}
+#ポーチフォリオから取り除く魚種
+#Excluded_Fish_Species <- c("サワラ")
+
+
+#Catch_Data
+Temp_Fish_Catch2 <- Kumejima2 %>% 
+   #filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Catch_kg) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Catch = sum(Catch_kg),.groups = "drop") %>% 
+  spread(key = "Fish_Name_JP",value = Catch)
+
+Temp_Fish_Catch2[is.na(Temp_Fish_Catch2)] <- 1.0 * 10 ^ (-10)
+
+#Value_Data
+Temp_Fish_Value2 <- Kumejima2%>% 
+  # filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Value_JPY) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Value = sum(Value_JPY),.groups = "drop") %>% 
+  as.data.frame(as.numeric(Temp_Fish_Value2$Value)) %>% 
+  spread(key = "Fish_Name_JP",value = Value)
+
+Temp_Fish_Value2[is.na(Temp_Fish_Value2)] <- 1.0 * 10 ^ (-10)
+
+
+```
+
+
+
+## Average-CV PE
+```{r}
+# Catch
+Kumejima_AV_CV_PE3 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Catch2,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE1) <- " "
+
+Kumejima_AV_CV_PE3 <- Kumejima_AV_CV_PE3 %>% 
+   gather(key = "Type",value = "PE_Catch") %>% 
+  mutate(Cluclate = "Average-CV PE")
+
+
+#Value
+Kumejima_AV_CV_PE4 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Value2,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE2) <- " "
+
+Kumejima_AV_CV_PE4 <- Kumejima_AV_CV_PE4 %>% 
+   gather(key = "Type",value = "PE_Value") %>% 
+  mutate(Cluclating = "Average-CV PE")
+
+Kumejima_AV_CV_PE_All2 <- cbind(Kumejima_AV_CV_PE3,Kumejima_AV_CV_PE4)
+Kumejima_AV_CV_PE_All2 <- Kumejima_AV_CV_PE_All2[c(-3,-4)]
+Kumejima_AV_CV_PE_All2 <- mutate(Kumejima_AV_CV_PE_All2,Data_Source = "キハダマグロ抜き")
+Kumejima_AV_CV_PE_All2 <- Kumejima_AV_CV_PE_All2[c(5,4,1,2,3)]
+
+```
+
+###################################
+
+#シビ抜き
+# section 4:データ読み込み
+```{r}
+Kumejima3 <- readRDS("./Working_Data/Kumejima/Kumejima_All_Data_6Oct20.rds") %>% 
+    filter(!Fishery_Type == "aquaculture") %>% 
+    filter(!Year == 2020) %>% 
+  filter(!Fish_Name_JP == "シビ")
+
+Kumejima3 <- as_tibble(Kumejima3)
+
+glimpse(Kumejima3)
+```
+
+
+#  Portfolio Effects
+## 魚種ごとの時系列データ
+```{r}
+#ポーチフォリオから取り除く魚種
+#Excluded_Fish_Species <- c("サワラ")
+
+
+#Catch_Data
+Temp_Fish_Catch3 <- Kumejima3 %>% 
+   #filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Catch_kg) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Catch = sum(Catch_kg),.groups = "drop") %>% 
+  spread(key = "Fish_Name_JP",value = Catch)
+
+Temp_Fish_Catch3[is.na(Temp_Fish_Catch3)] <- 1.0 * 10 ^ (-10)
+
+#Value_Data
+Temp_Fish_Value3 <- Kumejima3%>% 
+  # filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Value_JPY) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Value = sum(Value_JPY),.groups = "drop") %>% 
+  as.data.frame(as.numeric(Temp_Fish_Value2$Value)) %>% 
+  spread(key = "Fish_Name_JP",value = Value)
+
+Temp_Fish_Value3[is.na(Temp_Fish_Value3)] <- 1.0 * 10 ^ (-10)
+
+
+```
+
+
+
+## Average-CV PE
+```{r}
+# Catch
+Kumejima_AV_CV_PE5 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Catch3,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE1) <- " "
+
+Kumejima_AV_CV_PE5 <- Kumejima_AV_CV_PE5 %>% 
+   gather(key = "Type",value = "PE_Catch") %>% 
+  mutate(Cluclate = "Average-CV PE")
+
+
+#Value
+Kumejima_AV_CV_PE6 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Value3,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE2) <- " "
+
+Kumejima_AV_CV_PE6 <- Kumejima_AV_CV_PE6 %>% 
+   gather(key = "Type",value = "PE_Value") %>% 
+  mutate(Cluclating = "Average-CV PE")
+
+Kumejima_AV_CV_PE_All3 <- cbind(Kumejima_AV_CV_PE5,Kumejima_AV_CV_PE6)
+Kumejima_AV_CV_PE_All3 <- Kumejima_AV_CV_PE_All3[c(-3,-4)]
+Kumejima_AV_CV_PE_All3 <- mutate(Kumejima_AV_CV_PE_All3,Data_Source = "シビ抜き")
+Kumejima_AV_CV_PE_All3 <- Kumejima_AV_CV_PE_All3[c(5,4,1,2,3)]
+
+```
+###################################
+
+# きはだとシビ抜き
+# section 4:データ読み込み
+```{r}
+Kumejima4 <- readRDS("./Working_Data/Kumejima/Kumejima_All_Data_6Oct20.rds") %>% 
+    filter(!Fishery_Type == "aquaculture") %>% 
+    filter(!Year == 2020) %>% 
+  filter(!Fish_Name_JP == "シビ") %>% 
+  filter(!Fish_Name_JP == "キハダマグロ")
+
+Kumejima4 <- as_tibble(Kumejima4)
+
+glimpse(Kumejima4)
+```
+
+
+#  Portfolio Effects
+## 魚種ごとの時系列データ
+```{r}
+#ポーチフォリオから取り除く魚種
+#Excluded_Fish_Species <- c("サワラ")
+
+
+#Catch_Data
+Temp_Fish_Catch4 <- Kumejima4 %>% 
+   #filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Catch_kg) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Catch = sum(Catch_kg),.groups = "drop") %>% 
+  spread(key = "Fish_Name_JP",value = Catch)
+
+Temp_Fish_Catch4[is.na(Temp_Fish_Catch4)] <- 1.0 * 10 ^ (-10)
+
+#Value_Data
+Temp_Fish_Value4 <- Kumejima4%>% 
+  # filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Value_JPY) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Value = sum(Value_JPY),.groups = "drop") %>% 
+  as.data.frame(as.numeric(Temp_Fish_Value2$Value)) %>% 
+  spread(key = "Fish_Name_JP",value = Value)
+
+Temp_Fish_Value4[is.na(Temp_Fish_Value4)] <- 1.0 * 10 ^ (-10)
+
+
+```
+
+
+
+## Average-CV PE
+```{r}
+# Catch
+Kumejima_AV_CV_PE7 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Catch4,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE1) <- " "
+
+Kumejima_AV_CV_PE7 <- Kumejima_AV_CV_PE7 %>% 
+   gather(key = "Type",value = "PE_Catch") %>% 
+  mutate(Cluclate = "Average-CV PE")
+
+
+#Value
+Kumejima_AV_CV_PE8 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Value4,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE2) <- " "
+
+Kumejima_AV_CV_PE8 <- Kumejima_AV_CV_PE8 %>% 
+   gather(key = "Type",value = "PE_Value") %>% 
+  mutate(Cluclating = "Average-CV PE")
+
+Kumejima_AV_CV_PE_All4 <- cbind(Kumejima_AV_CV_PE7,Kumejima_AV_CV_PE8)
+Kumejima_AV_CV_PE_All4 <- Kumejima_AV_CV_PE_All4[c(-3,-4)]
+Kumejima_AV_CV_PE_All4 <- mutate(Kumejima_AV_CV_PE_All4,Data_Source = "キハダマグロ・シビ抜き")
+Kumejima_AV_CV_PE_All4 <- Kumejima_AV_CV_PE_All4[c(5,4,1,2,3)]
+
+```
+
+
+#結合
+```{r}
+Kumejima_Ine_AVCVPE <- rbind(Kumejima_AV_CV_PE_All,Kumejima_AV_CV_PE_All2,
+                             Kumejima_AV_CV_PE_All3,Kumejima_AV_CV_PE_All4)
+
+Kumejima_Ine_AVCVPE <- Kumejima_Ine_AVCVPE %>% 
+  filter(!Type == "ci")
+```
+
+
+
+

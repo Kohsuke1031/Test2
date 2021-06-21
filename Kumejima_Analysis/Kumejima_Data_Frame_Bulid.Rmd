@@ -1,0 +1,180 @@
+---
+title: "Bulid data_frame of Kumejima "
+date: "`r Sys.Date()`"
+author: "中村洸介"
+output:
+   #css: CustomCSS.css
+  　rmdformats::material:
+    
+    code_folding: hide
+    highlight: kate
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+    md_extensions: -ascii_identifiers
+---
+
+
+```{r knitr_init, echo=TRUE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=TRUE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+# 1 準備：
+## 1-0 概要
+-オリジナルデータから.rdsファイルの作成
+-
+
+## 1-1 Library読み込む
+```{r echo=TRUE}
+# 現在の環境にある変数の消去
+rm(list = ls(all=TRUE))
+#解析処理に関するセットアップ、パッケージの読み込みなど
+library(tidyverse)
+library(ggsci)
+library(gdata)
+library(DT)
+library(xtable)
+library(openxlsx)
+library(ggrepel)
+library(formattable)
+library(data.table)
+```
+
+
+
+## 1-2 修正データの読み込み　：RDSファイルの作成
+```{r eval=FALSE, include=FALSE}
+#list.file関数とread_csv関数を用いて一括で読み込む
+df_paths = list.files(path = "./Working_Data/Kumejima/Kumejima_CSV",full.names = T)
+
+
+read_files <- function(x){
+  df <- read.csv(x,
+                 header = T,
+                 fileEncoding = "CP932")
+  return(df)
+}
+
+Kumejima <- as.data.frame(NULL)
+for (i in 1:length(df_paths)) {
+  df <- read_files(df_paths[i])
+  Kumejima <- rbind(Kumejima,df)
+}
+
+df <- as.data.frame(NULL)
+
+saveRDS(Kumejima,file = "Kumejima1989~2020.rds")
+
+```
+
+
+
+## 1-3　データ読み込み
+```{r,eval=FALSE}
+#データを読み込む
+Kumejima_ALL <- readRDS("./Working_Data/Kumejima/Kumejima1989~2020.rds")
+
+Kumejima_ALL <- as_tibble(Kumejima_ALL)
+
+glimpse(Kumejima_ALL)  # 久米島のデータ
+
+Fish_Name <- as.data.frame(unique(Kumejima_ALL$魚種))
+Fishery_Name <- as.data.frame(unique(Kumejima_ALL$漁業種類))
+market_Name <- as.data.frame(unique(Kumejima_ALL$漁協名))
+
+```
+
+
+## 1-4 魚種名統一
+```{r,eval=F }
+#種名の統一
+name_japanese <- read.csv("Working_Data/Kumejima/Kumejima_Fish_Origin.csv",header=TRUE,fileEncoding = "CP932")　
+#Windowsではエンコードの関係でうまくread.csvだと日本語が読み込めないことがある。
+#readrパッケージのread_csvで読み込むとうまくいく。
+
+#英語にしたい日本語（一列目）と英語（二列目）を含んだデータセットを読み込む。
+translator <- read.csv("Working_Data/Kumejima/Kumejima_Fish_Translate.csv",header=TRUE,fileEncoding = "CP932")
+
+#日本語を英語にしていく。
+names(translator)=c("Fish_Name_JP_in_Data","Fish_Name_JP","Scientific_Name","Fish_Name_EN")
+
+En=merge(name_japanese,translator,by.x="Fish_Name_JP_in_Data",by.y="Fish_Name_JP_in_Data",all.x=T)
+
+Kumejima_ALL <- merge(Kumejima_ALL,translator,by.x="魚種",by.y="Fish_Name_JP_in_Data",all=T)
+
+
+```
+
+
+## 1-5 漁業名変換
+```{r,eval=F }
+#漁業名の統一
+fishery_japanese <- read.csv("Working_Data/Kumejima/Kumejima_Fishery_Original.csv",header=TRUE,fileEncoding = "CP932")　
+#Windowsではエンコードの関係でうまくread.csvだと日本語が読み込めないことがある。
+#readrパッケージのread_csvで読み込むとうまくいく。
+
+#英語にしたい日本語（一列目）と英語（二列目）を含んだデータセットを読み込む。
+fishery_translator <- read.csv("Working_Data/Kumejima/Kumejima_Fishery_Translate.csv",header=TRUE,fileEncoding = "CP932")
+
+
+#日本語を英語にしていく。
+En_fishery = merge(fishery_japanese,fishery_translator,by.x="漁業種",by.y="漁業種",all.x=T)
+
+Kumejima_ALL <- merge(Kumejima_ALL,En_fishery,by.x="漁業種類",by.y="漁業種",all=T)
+
+
+```
+
+
+
+## 1-6 データクリーニング
+```{r,eval = FALSE}
+#列の並び替え、見やすくするため
+Kumejima_ALL <- Kumejima_ALL[c(4,5,6,3,7,8,15,1,9,2,12,13,14,10,11)]
+Kumejima_ALL <- Kumejima_ALL[-8]
+
+names(Kumejima_ALL) <- c( "Year","Month","Day", "Cooperative_Name","Union_Number_","Fishery_Type_Code","Fishery_Type",
+                          "Fish_Name_Code","Fish_Name_in_Data","Fish_Name_JP","Scientific_Name","Fish_Name_EN","Catch_kg","Value_JPY")
+
+
+
+
+
+#漁獲高を現在価値に修正
+CPI_2015 <- read.csv("JP_CPI_FreshSeafood_30March20.csv",header = T,fileEncoding = "CP932")
+
+#現在価値のデータとKumejima_ALLを結合
+Kumejima_ALL <- left_join(Kumejima_ALL,CPI_2015,by = "Year")
+
+#漁獲高とCPIをかけて現在価値を算出する
+Kumejima_ALL <- Kumejima_ALL %>% 
+  mutate(Value_JPY = Value_JPY*Fresh_Seafood_CPI)
+
+#CatchとValueの０以下を削除
+Kumejima_ALL <- Kumejima_ALL %>% 
+  filter(!Catch_kg <= 0) %>% 
+  filter(!Value_JPY <= 0)
+
+
+
+
+
+#Kumejima_DataをRDSで保存
+saveRDS(Kumejima_ALL,file = "Working_Data/Kumejima/Kumejima_All_Data_6Oct20.rds")
+
+```
+
+
+

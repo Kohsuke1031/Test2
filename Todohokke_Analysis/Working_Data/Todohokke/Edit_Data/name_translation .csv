@@ -1,0 +1,226 @@
+jp,en
+水揚日,Landing Date
+漁業名,Fishing Methods
+荷主コード,Shipper Code
+荷主名,Shipper Name
+分類コード,Classification Code
+分類名,Classification name
+魚種コード,Fish Species Code
+魚種名,Fish Species
+規格コード,Standard Code
+規格名,Standard
+仕切個数,Partition
+仕切数量,Catch
+仕切単価区分名,Unit
+仕切税抜金額,Value
+ツガイナカ中村漁場　１号,
+ツガイナカ中村漁場　２号,
+キズ,injured
+ギン,Silber
+スレ,Scratch
+バラ,Mix
+パンダ,Mottled
+ヤセ,Skinny
+込,include
+小,Small
+小キズ,Small_inj
+大,Large
+大キズ,Large_inj
+大大,Large_Large
+大中,Large_Middle
+中,Middle
+中キズ,Middle_inj
+中小,Middle_Small
+別,Abnormal
+毛立ち,Tousled
+台,Number
+入,in
+K　,Kg
+k,Kg
+のじ,Dead
+かじきまぐろ,Marlin
+活〆,Active tightening
+以下,Less than
+ブナ,Beech
+マルメジ,Small Bluefin Tuna
+いしだい,Prrot fish
+えちおぴあ,Pomfret
+えびすだい,Ebisu perch
+かんぱち,Greater amberjack
+ソデイカ,Rhomboid squid
+そでいか,Rhomboid squid
+のじムシ,Dead Amphipods
+ほなが,misstake
+まるいわし,Jpanese Anchovy
+めじな,Greeenfish
+ヤガラ,Smooth flutemouth
+わたりがに,Gazami crab
+木マス,Box
+目掛,White Ling
+クイ,Satiety
+ゴンボ,Out egg
+のじスレ,Dead Scratch
+ボウズイカ,Rossia Pacifica
+ジャバラ,Bellows
+くろがれい,Black plaice
+やがら,Smooth flutemouth
+沖漬け,Marinated_Squids
+下,Low
+丸,All
+汐の子,Baby Greater amberjack
+中レス,Middle_Scratch
+抜込,Witout
+中のじｽﾚﾊﾟﾝﾀﾞ,Middle Dead Scratch Mottled
+外,Out
+目掛り,White Ling
+ケバ,Tousled
+キントキダイ,Red bigeye.
+しおのこ,Baby Greater amberjack
+スギ,Black Kingfish
+すみいか,Cuttlefish
+たちうお,Largehead Hiartail
+とびうお,Flyingfish
+はなだい,rimson Sea -bream
+ぼうずいか,Rossia Pacifica
+活,Active
+石垣鯛,Spotted Knifejaw
+奇形,Abnormal
+クロカワカジキ,Indo-Pacific Blue Marlin
+ヒラタエイ,Urolophus
+まつかさ,Pine Cones
+ワタリ,Gazami crab
+イシガキダイ,Spotted Knifejaw
+クロダイ,Brackhead Seabream
+太刀魚,Largehead Hiartail
+特大,Big_Large
+特特大,Super extra large
+並べ,arrenged
+あんこう,Goosefish
+いか,Squid
+いわし,Sardine
+かすぺ,Ray
+かれい,Flounder
+さけ,Salmon
+さば,Mackerel
+さめ,Shark
+すけそう,Pollack
+そい・めぬき,RockFish
+その他魚類,Fish_Other
+たこ,Octopus
+たら,Pacific Cod
+ひらめ,Bastard Halibut
+ぶり,Yellowtail
+まぐろ,Tuna
+ます,Trout
+あおます,Pink salmon
+あかいか,Flying Squid
+あさばがれい,Rock-Sole
+あじ,Japanese Horse-Mackerel
+あなご,Conger-eel
+あぶらがれい,Kamchatka Flounder
+あぶらこ,Greenling
+あぶらざめ,Atrantic Piny Dogfish
+あんこう,Goosefish
+いか沖漬け,Marinated_Squids
+いしがれい,Stone Flounder
+いしなぎ,Seabass
+いなだ,Middle Yellowtail
+えぞかすぺ,Skate
+いわし,Sardine
+エチオピア,Pomfret
+かがみだい,Mirror Dory
+かながしら,Searobin
+かに,Crab
+がや,White-Edged Rockfish
+かわがれい,Starry Flounder
+かわはぎ,Leatherfish
+ぎすかじか,Steller's Sculpin
+くろがしら,Cresthead
+けいじ,Baby Salmon
+ごっこオス,Smooth Lumpsucker M
+ごっこメス,Smooth Lumpsucker F
+ごまふぐ,Takihugu
+さくらます,Cherry Salmon
+さけオス,Chum Salmon M
+さけメス,Chum Salmon F
+さば,Chub Mackerel
+さめがれい,Roughscale Flounder
+さわら,Spanish Mackerel
+さんま,Pcific Saury
+しいら,Dolphin-Fish
+したびらめ,Tongue-Sole
+しまほっけ,Atka Mackerel
+すけそう,Pollack
+すずき,Japanese Seabass
+すながれい,Sand Flounder
+するめいか,Japanese Common Squid
+そうはち,Pointhead Flounder
+その他いか,Squid_Other
+その他いわし,Sardine_Other
+その他かすぺ,Ray_Otehr
+その他かれい,Flounder_Other
+その他こなご,Sand Lance_Other
+その他さけ,Salmon_Other
+その他さめ,Shark_Other
+その他ぶり,Yellowtail_Other
+その他まぐろ,Tuna_Other
+その他ます,Trout_Other
+その他鮮魚,Fresh Dish_Other
+だっく,Marbled Rockfish
+たなご,Temminc's Surf Perch
+とうべつかじか,Shbaggy sea raven
+ときしらず,Summer-Catch Salmon
+とらふぐ,Tigger Puffer
+どんこ,Brown Hakeling
+ながら,Black Rockfish
+なべかじか,Great Sculpin
+なめたがれい,Blackfin Flounder
+にしん,Pacific Herring
+はっかく,Sailfin Poacher
+ばばがれい,Slime Flounder
+はも,Daggertooth Pike Conger
+びっき,Flog-Flounder
+ひらまさ,AmberJack
+ひらめ,Bastard Halibut
+ふぐ,Pufferfish
+ふくらぎ,Small Yelllowtail
+ぶり,Yellowtail
+べろかじか,Elkhorn Sculpin
+ほうぼう,Bluefin Searobin
+ほっかいあぶらこ,Rock Greenling
+ほっけ,Okhotsk Atka Mackerel
+まかすぺ,Ray
+まがれい,Brown Sole
+まこがれい,Marbled Sole
+ますのすけ,King Salmon
+まぞい,Fox Jacopever
+まだい,Red sea-Bream
+まだら,Pacific Cod
+まだらキズ,Pcific Cod_Inj
+まだら別,Pacific Cod_Sep
+まつかわがれい,Barfin Flounder
+まとうだい,Jhon Dory
+まふぐ,Globefish
+まんぼう,Sun Fish
+みずいか,Spear Squid
+みずくさがれい,Round-Nose Flounder
+ミンク鯨,Minke Whal
+むらさきいか,Flying Squid
+めじまぐろ,Small Bluefin Tuna
+めだい,Japanese Butterfish
+めぬき,Angry Rockfish
+めばる,Rockfish
+もかざめ,Salmon Shark
+もんき,Yellow Body Rockfish
+活あぶらこ,Active Greenlling
+活〆ぶり,Active Deadline Yellowtail
+活だこ,Active Octopus
+活ひらめ,Active Bastard Halibut
+銀さけ,Silber Salmon
+大女子,Pacific Sand Lance
+生だこ,Living Octopus
+活ながら,Fresh Black Rockfish
+水ダコ,North-Pacific Giant  Octopus
+本まぐろ,Bluefin Tuna
+網ほっけ,Net Atka Mackerel
+柳だこ,Chestnut Octopus

@@ -1,0 +1,794 @@
+---
+title: "Project2020:Portofolio Okinawa Kumejima"
+subtitle: "TEST1"
+date: "Last compiled on `r format(Sys.time())`"
+author: "Kohsuke Nakamura, gaku Ihsimura (Iwate University)"
+abstract: "TEST"
+
+##  Must put a space between setting: ××
+output: 
+ rmdformats::html_clean:
+     highlight: "kate"
+     code_folding: "hide"
+     number_sections: true
+     toc_depth: 2
+     font_adjustment: -1
+     fig_width: 10
+     fig_height: 6
+    
+# html_clean default
+#html_clean(
+#  fig_width = 6,
+#  fig_height = 6,
+#  fig_caption = TRUE,
+#  highlight = "kate",
+#  lightbox = TRUE,
+#  thumbnails = TRUE,
+#  gallery = FALSE,
+#  toc = TRUE,
+#  toc_depth = 2,
+#  use_bookdown = FALSE,
+#  pandoc_args = NULL,
+#  md_extensions = NULL,
+#  mathjax = "rmdformats",
+#  ...)
+
+
+---
+<!-- gaku's style CSS fromat!　gakuStyle_Ver1.0  with  rmdformats::html_clean:
+https://en.wikipedia.org/wiki/Blue-gray#Variations_of_blue-gray  
+https://github.com/juba/rmdformats/blob/master/man/html_clean.Rd
+-->　
+
+<style>
+#main .nav-pills > li.active > a,
+#main .nav-pills > li.active > a:hover,
+#main .nav-pills > li.active > a:focus {
+    background-color: #8C92AC;        }
+#main .nav-pills > li > a:hover {
+    background-color: #8C92AC;   }
+h1, h2, h3, h4, h5, h6, legend {
+    color: #8C92AC;             }
+#nav-top span.glyphicon {
+    color: #8C92AC;       }
+#table-of-contents header {
+    color: #5D8AA8;         }
+#table-of-contents h2 {
+    background-color: #22983B; }
+#main a {
+    background-image: linear-gradient(180deg,#d64a70,#d64a70);
+    color: #c7254e;}
+a:hover {
+    color: #3d1308;
+}
+a:visited {
+    color: #3d1308;
+}
+
+#content {
+    max-width: 80%; 
+}
+
+#table-of-contents {
+color:orange;
+background: grey !important; 
+}
+
+/* Whole document: */
+body{ 
+    font-size: 12pt; 
+} 
+/* Headers */
+h1{ 
+    font-size: 18pt; 
+} 
+
+h2{ 
+    font-size: 14pt; 
+} 
+
+
+
+
+</style>
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print='100')
+opts_chunk$set(echo=FALSE,
+                 cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Section 1: Project Memo & Log
+
+[21 Sep 2020:gaku]　ポートフォリオ効果を入れ込む: Section 
+
+
+# Section 2: Code Memo & Log
+
+## (a) Reference:General
+- [Rmarkdown format guide](https://bookdown.org/yihui/rmarkdown/)
+
+- [The tidyverse style guide by Hadly Wickam](https://style.tidyverse.org/)
+
+- [Aesthetic sepecifications](https://ggplot2.tidyverse.org/articles/ggplot2-specs.html)
+
+## (b) Reference:Section Specific 
+<!-- Example 1 　- [Section ...  ]　××××××　 -->　
+<!-- Example 2 　- [Section ×　Portfolio Simulation  ]　××××××　 -->　
+
+
+## (c) Remarks/注意事項
+<!-- Example 1 　** ** bold and Section number + reasons 　 -->　
++ **Do NOT run these sections as default: defaultでは走らせないセクション:**
+ 
+## (d) Code log　/コードメモ
+<!-- Example 1 　- [13 May 2020:gaku]石川レポートの初期版提出後にコード整理のために学志がVer.8.0を作成　 -->　
+<!--　section   # 上位１０魚魚種とその他に分ける   set as no run ⇐　for simulation    -->
+
+# Section 3:パッケージ読み込み
+```{r echo=TRUE}
+#解析処理に関するセットアップ、パッケージの読み込みなど
+rm(list = ls(all.names = TRUE))
+
+# General 
+library(tidyverse)
+library(ggthemes)
+#library(googlesheets4)
+
+# General but exciplicit purposes
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(readr)
+
+library(DT)
+library(data.table)
+
+# Specific library
+library(ggsci)
+library(gridExtra)
+library(grid)
+library(gtable)
+library(viridis)
+
+#library(ecofolio)
+library(MuMIn)
+
+# load fucntions
+source("Kumejima_Function.R")
+source("gakuGeneral_functions.R")
+source("Portfolio_Effect_gaku.R")
+```
+
+
+
+
+# section 4:データ読み込み
+```{r}
+Kumejima_ALL <- readRDS("./Working_Data/Kumejima/Kumejima_All_Data_6Oct20.rds") %>% 
+    filter(!Fishery_Type == "aquaculture") %>% 
+    filter(!Year == 2020) %>% 
+  filter(!Fish_Name_JP == "シビ") %>% 
+  filter(!Fish_Name_JP == "キハダマグロ")
+
+Kumejima_ALL <- as_tibble(Kumejima_ALL)
+
+glimpse(Kumejima_ALL)
+
+options(scipen = 100)
+```
+
+
+## 年間漁獲量・漁獲高
+```{r}
+Year_Catch_Value <- fun_Annual_Catch_Value(Kumejima_ALL,Catch_kg,Value_JPY)
+
+g1 <- ggplot(Year_Catch_Value) +
+  aes(x = Year,y = Catch,fill = Fishery_Type) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_continuous(breaks = seq(1989,2019,2)) +
+  scale_y_continuous(breaks = seq(0,650,100)) +
+  labs(x = "年",y = "漁獲量（トン）") +
+  scale_fill_hue(name = "漁業種",label = c(
+    bottom_longline = "底延縄",
+    bottom_pole_and_line = "まち類・底魚一本釣（知事許可）",
+    diving = "潜り（採貝・採藻を除く）",
+    drive_in_net = "追込網（知事許可）",
+    fishery_skipjack_tuna = "カツオ・マグロ漁業",
+    gillnet = "刺網",
+    lift_net = "敷網（追込網を含む）",
+    pole_and_line = "釣り（カツオ・マグロ以外）",
+    setnet = "定置網（知事許可）",
+    squid_fishing = "セーイカ釣",
+    squid_jigging = "いか釣",
+    trap = "かご網",
+    tuna_longline_governor = "まぐろはえ縄（知事許可）",
+    tuna_longline_minister = "まぐろはえ縄（大臣許可）",
+    zother_fishery = "漁業（その他）"))
+
+g1
+
+g2 <- ggplot(Year_Catch_Value) +
+  aes(x = Year,y = Value,fill = Fishery_Type) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_continuous(breaks = seq(1989,2019,2)) +
+  scale_y_continuous(breaks = seq(0,2000,500)) +
+  labs(x = "年",y = "漁獲高（百万円）") +
+   scale_fill_hue(name = "漁業種",label = c(
+    bottom_longline = "底延縄",
+    bottom_pole_and_line = "まち類・底魚一本釣（知事許可）",
+    diving = "潜り（採貝・採藻を除く）",
+    drive_in_net = "追込網（知事許可）",
+    fishery_skipjack_tuna = "カツオ・マグロ漁業",
+    gillnet = "刺網",
+    lift_net = "敷網（追込網を含む）",
+    pole_and_line = "釣り（カツオ・マグロ以外）",
+    setnet = "定置網（知事許可）",
+    squid_fishing = "セーイカ釣",
+    squid_jigging = "いか釣",
+    trap = "かご網",
+    tuna_longline_governor = "まぐろはえ縄（知事許可）",
+    tuna_longline_minister = "まぐろはえ縄（大臣許可）",
+    zother_fishery = "漁業（その他）"))
+
+g2
+
+```
+
+
+漁獲量・漁獲高ともに1989年から2013年頃にかけて右肩上がりで増加し、その後は漁獲量は明確に減少しており、漁獲高は緩やかな減少傾向がみられる。魚悪規模が大きいのはかつお・マグロ漁業で漁獲量・漁獲高ともに大きい。その次は潜りが大きい。
+
+
+
+
+## 月間漁獲量・漁獲高
+```{r}
+Month_Catch_Value <- fun_Monthly_Catch_Value(Kumejima_ALL,Catch_kg,Value_JPY)
+
+
+g3 <- ggplot(Month_Catch_Value) +
+  aes(x = Month,y = Catch,fill = Fishery_Type) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold")) +
+  scale_x_continuous(breaks = seq(1,12,1)) +
+  scale_y_continuous(breaks = seq(0,800,100)) +
+  labs(x = "月",y = "漁獲量（トン）") +
+    scale_fill_hue(name = "漁業種",label = c(
+    bottom_longline = "底延縄",
+    bottom_pole_and_line = "まち類・底魚一本釣（知事許可）",
+    diving = "潜り（採貝・採藻を除く）",
+    drive_in_net = "追込網（知事許可）",
+    fishery_skipjack_tuna = "カツオ・マグロ漁業",
+    gillnet = "刺網",
+    lift_net = "敷網（追込網を含む）",
+    pole_and_line = "釣り（カツオ・マグロ以外）",
+    setnet = "定置網（知事許可）",
+    squid_fishing = "セーイカ釣",
+    squid_jigging = "いか釣",
+    trap = "かご網",
+    tuna_longline_governor = "まぐろはえ縄（知事許可）",
+    tuna_longline_minister = "まぐろはえ縄（大臣許可）",
+    zother_fishery = "漁業（その他）"))
+
+g3
+
+g4 <- ggplot(Month_Catch_Value) +
+  aes(x = Month,y = Value,fill = Fishery_Type) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold")) +
+  scale_x_continuous(breaks = seq(1,12,1)) +
+  scale_y_continuous(breaks = seq(0,3000,500)) +
+  labs(x = "月",y = "漁獲高（百万円）") +
+    scale_fill_hue(name = "漁業種",label = c(
+    bottom_longline = "底延縄",
+    bottom_pole_and_line = "まち類・底魚一本釣（知事許可）",
+    diving = "潜り（採貝・採藻を除く）",
+    drive_in_net = "追込網（知事許可）",
+    fishery_skipjack_tuna = "カツオ・マグロ漁業",
+    gillnet = "刺網",
+    lift_net = "敷網（追込網を含む）",
+    pole_and_line = "釣り（カツオ・マグロ以外）",
+    setnet = "定置網（知事許可）",
+    squid_fishing = "セーイカ釣",
+    squid_jigging = "いか釣",
+    trap = "かご網",
+    tuna_longline_governor = "まぐろはえ縄（知事許可）",
+    tuna_longline_minister = "まぐろはえ縄（大臣許可）",
+    zother_fishery = "漁業（その他）"))
+
+
+g4
+
+```
+
+月ごとの漁獲量・漁獲高では8月から12月頃にかけてピークが来ている。  
+漁獲規模ではかつお・マグロ漁業が最も大きい。  
+
+
+
+## 各漁業種における年間漁獲割合
+```{r fig_width = 10, fig_height = 6}
+Fishery_Rate <- fun_Fishery_Rate(Kumejima_ALL,Catch_kg,Value_JPY)
+
+
+g5 <- ggplot(Fishery_Rate) +
+  aes(x = Year,y = Percentage_Catch,fill = Fishery_Type) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.text = element_text(size = 15,face = "bold")) +
+  scale_x_continuous(breaks = seq(1989,2019,2)) +
+  scale_y_continuous(breaks = seq(0,100,10)) +
+   scale_fill_hue(name = "漁業種",label = c(
+    bottom_longline = "底延縄",
+    bottom_pole_and_line = "まち類・底魚一本釣（知事許可）",
+    diving = "潜り（採貝・採藻を除く）",
+    drive_in_net = "追込網（知事許可）",
+    fishery_skipjack_tuna = "カツオ・マグロ漁業",
+    gillnet = "刺網",
+    lift_net = "敷網（追込網を含む）",
+    pole_and_line = "釣り（カツオ・マグロ以外）",
+    setnet = "定置網（知事許可）",
+    squid_fishing = "セーイカ釣",
+    squid_jigging = "いか釣",
+    trap = "かご網",
+    tuna_longline_governor = "まぐろはえ縄（知事許可）",
+    tuna_longline_minister = "まぐろはえ縄（大臣許可）",
+    zother_fishery = "漁業（その他）")) +
+  labs(x = "年",y = "漁獲量割合（％）",colour = "漁業種")
+
+g5
+
+g6 <- ggplot(Fishery_Rate) +
+  aes(x = Year,y = Percentage_Value,fill = Fishery_Type) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.text = element_text(size = 15,face = "bold")) +
+  scale_x_continuous(breaks = seq(1989,2019,2)) +
+  scale_y_continuous(breaks = seq(0,100,10)) +
+  scale_fill_hue(name = "漁業種",label = c(
+    bottom_longline = "底延縄",
+    bottom_pole_and_line = "まち類・底魚一本釣（知事許可）",
+    diving = "潜り（採貝・採藻を除く）",
+    drive_in_net = "追込網（知事許可）",
+    fishery_skipjack_tuna = "カツオ・マグロ漁業",
+    gillnet = "刺網",
+    lift_net = "敷網（追込網を含む）",
+    pole_and_line = "釣り（カツオ・マグロ以外）",
+    setnet = "定置網（知事許可）",
+    squid_fishing = "セーイカ釣",
+    squid_jigging = "いか釣",
+    trap = "かご網",
+    tuna_longline_governor = "まぐろはえ縄（知事許可）",
+    tuna_longline_minister = "まぐろはえ縄（大臣許可）",
+    zother_fishery = "漁業（その他）")) +
+    labs(x = "年",y = "漁獲高割合（％）",colour = "漁業種")
+
+g6
+
+```
+
+
+1989年から2019年にかけてかつお・マグロ漁業の割合が漁獲量・漁獲高ともに大きい。  
+次に大きいのは潜りである。潜りは1989年から2013年にかけて減少傾向にあったが、その後は少しだけ増加傾向にある。  
+
+
+
+## 上位15魚種における漁獲量・漁獲高割合
+```{r eval = FALSE}
+Kumejima_15_Fish <- Kumejima_ALL %>% 
+  group_by(Fish_Name_JP) %>% 
+  summarise(Catch = sum(Catch_kg)/1000,
+            Value = sum(Value_JPY)/1000000) %>% 
+  mutate(Catch_Rate = (Catch/sum(Catch))*100,
+         Value_Rate = (Value/sum(Value))*100) %>% 
+  arrange(desc(Value))
+```
+
+```{r}
+Catch_Rate <- Kumejima_ALL %>% 
+  mutate(Fish_Name_JP = ifelse(Fish_Name_JP %in% c(
+   "ガラサー","ビンナガマグロ","サワラ類","シイラ",
+   "クロカジキ","ブダイ科","ソデイカ","トビイカ","メバチマグロ",
+   "ワモンダコ","コブシメ","イソフエフキ","カツオ",
+   "ハタ類","ヒラアジ類"),Fish_Name_JP,"他の魚種")) 
+
+Catch_Rate <- fun_Fish_Rate(Catch_Rate,Catch_kg,Value_JPY)
+
+Value_Rate <- Kumejima_ALL %>% 
+  mutate(Fish_Name_JP = ifelse(Fish_Name_JP %in% c(
+   "ヤコウガイ","クロカジキ","ビンナガマグロ","キハダマグロ",
+   "ブダイ科","シイラ","ソデイカ","イセエビ","ワモンダコ",
+   "トビイカ","メバチマグロ","コブシメ","ハタ類",
+   "イソフエフキ","ハマダイ"),Fish_Name_JP,"他の魚種")) 
+
+Value_Rate <-fun_Fish_Rate(Value_Rate,Catch_kg,Value_JPY)
+
+
+g7 <- ggplot(Catch_Rate) +
+  aes(x = Year,y = Percentage_Catch,fill = Fish_Name_JP) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.text = element_text(size = 15,face = "bold")) +
+  scale_x_continuous(breaks = seq(1989,2019,2)) +
+  scale_y_continuous(breaks = seq(0,100,10)) +
+  labs(x = "年",y = "漁獲量割合（％）",fill = "魚種")
+
+g7
+  
+
+g8 <- ggplot(Catch_Rate) +
+  aes(x = Year,y = Percentage_Value,fill = Fish_Name_JP) +
+  geom_bar(stat = "identity") +
+  theme(text = element_text(family = "HiraKakuProN-W3", size = 15),
+        panel.background=element_rect(fill="snow2"),
+        axis.title.x= element_text(size = 15,hjust=1,vjust =0, face = "bold"),
+        axis.title.y= element_text(size = 15,face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.text = element_text(size = 15,face = "bold")) +
+  scale_x_continuous(breaks = seq(1989,2019,2)) +
+  scale_y_continuous(breaks = seq(0,100,10)) +
+  labs(x = "年",y = "漁獲高割合（％）",fill = "魚種")
+
+g8
+```
+
+年間漁獲割合ではキハダマグロの推移が目立つ。1989年から1996年までは１０％以下であったのに対し、1997年から急激な増加傾向にある。  
+また、久米島のデータでは他の魚種に含まれている小規模な漁獲の魚種が多く含まれており、おそらく少量だが単価の高い魚種が含まれていることが窺える。  
+
+
+
+## HHI
+```{r}
+HHI_Kumejima <- fun_HHI_Sim(Kumejima_ALL,Catch_kg,Value_JPY)
+
+EffectA = 1.5
+
+g9 <- ggplot(HHI_Kumejima) +
+  aes(x = HHI_Catch_Total,y = HHI_Value_Total,colour = Year) +
+  theme_economist()+
+  geom_point(aes(size = Catch),alpha=.5) +
+  scale_colour_gradient2(name="Year",low = "red", mid = "yellow", high = "blue", 
+                          midpoint = 2005,
+                        breaks = seq(1989, 2019, by = 5), labels = seq(1989, 2019, by = 5),
+                        guide = guide_colourbar(nbin = 7,barwidth = 20, barheight = 2,  
+                                                title.hjust = NULL, title.vjust = .6)) +
+  geom_abline(intercept = 0,slope = 1,linetype = "dotted") +
+  labs(x = "漁獲量のHHI",y = "漁獲高のHHI",size="漁獲量（トン）") +　
+  scale_x_continuous(limits = c(0,5500),breaks = seq(0,5500,1000)) +　　　　　　　　　　　
+  scale_y_continuous(limits = c(0,5500),breaks = seq(0,5500,1000)) +
+   theme(text = element_text(family = "HiraKakuProN-W3"),
+        axis.title.x = element_text(size=15,vjust = 0,hjust = 1),
+        axis.title.y = element_text(size=15,vjust = 1,hjust = 1),
+        axis.text= element_text(size=15),
+       plot.title = element_text(size=15),
+       legend.title = element_text(size= 15),
+       legend.text = element_text(size=10),
+       panel.background=element_rect())+
+      scale_radius(range=c(20/EffectA,60/EffectA))
+
+g9
+```
+
+
+## Simpson
+```{r}
+Simpson_Kumejima <- fun_Simpson_Sim(Kumejima_ALL,Catch_kg,Value_JPY)
+
+EffectA = 1.5
+
+g10 <- ggplot(Simpson_Kumejima) +
+  aes(x = Simpson_Catch_Total,y = Simpson_Value_Total,colour = Year) +
+  theme_economist()+
+  geom_point(aes(size = Catch),alpha=.5) +
+ scale_colour_gradient2(name="Year",low = "red", mid = "yellow", high = "blue", 
+                          midpoint = 2005,
+                        breaks = seq(1989, 2019, by = 5), labels = seq(1989, 2019, by = 5),
+                        guide = guide_colourbar(nbin = 7,barwidth = 20, barheight = 2,  
+                                                title.hjust = NULL, title.vjust = .6)) +
+  geom_abline(intercept = 0,slope = 1,linetype = "dotted") +
+  labs(x = "漁獲量のλ",y = "漁獲高のλ",size="漁獲量（トン）") +　
+   scale_x_continuous(limits = c(0,26),breaks = seq(0,25,5)) +　　　　　　　　　　　
+  scale_y_continuous(limits = c(0,26),breaks = seq(0,25,5)) +
+    theme(text = element_text(family = "HiraKakuProN-W3"),
+        axis.title.x = element_text(size=15,vjust = 0,hjust = 1),
+        axis.title.y = element_text(size=15,vjust = 1,hjust = 1),
+        axis.text= element_text(size=25),
+       plot.title = element_text(size=25),
+       legend.title = element_text(size= 13),
+       legend.text = element_text(size=13),
+       panel.background=element_rect())+
+      scale_radius(range=c(20/EffectA,60/EffectA))
+
+g10
+```
+
+
+
+## Shannon
+```{r}
+Shannon_Kumejima <- fun_Shannon_Sim(Kumejima_ALL,Catch_kg,Value_JPY)
+
+EffectA = 1.5
+
+g11 <- ggplot(Shannon_Kumejima) +
+  aes(x = Shannon_Catch_Total,y = Shannon_Value_Total,colour = Year) +
+  theme_economist()+
+  geom_point(aes(size = Catch),alpha=.5) +
+  scale_colour_gradient2(name="Year",low = "red", mid = "yellow", high = "blue", 
+                          midpoint = 2005,
+                        breaks = seq(1989, 2019, by = 5), labels = seq(1989, 2019, by = 5),
+                        guide = guide_colourbar(nbin = 7,barwidth = 20, barheight = 2,  
+                                                title.hjust = NULL, title.vjust = .6)) +
+  geom_abline(intercept = 0,slope = 1,linetype = "dotted") +
+  labs(x = "漁獲量のH'",y = "漁獲高のH'",size="漁獲量（トン）") +　
+ scale_x_continuous(limits = c(0,6),breaks = seq(0,5,1)) +　　　　　　　　　　　
+  scale_y_continuous(limits = c(0,6),breaks = seq(0,5,1)) +
+   theme(text = element_text(family = "HiraKakuProN-W3"),
+        axis.title.x = element_text(size=15,vjust = 0,hjust = 1),
+        axis.title.y = element_text(size=15,vjust = 1,hjust = 1),
+        axis.text= element_text(size=15),
+       plot.title = element_text(size=15),
+       legend.title = element_text(size= 15),
+       legend.text = element_text(size=10),
+       panel.background=element_rect())+
+      scale_radius(range=c(20/EffectA,60/EffectA))
+
+g11
+```
+
+
+
+#  Portfolio Effects
+## 魚種ごとの時系列データ
+```{r}
+#ポーチフォリオから取り除く魚種
+#Excluded_Fish_Species <- c("サワラ")
+
+
+#Catch_Data
+Temp_Fish_Catch1 <- Kumejima_ALL %>% 
+   #filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Catch_kg) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Catch = sum(Catch_kg),.groups = "drop") %>% 
+  spread(key = "Fish_Name_JP",value = Catch)
+
+Temp_Fish_Catch1[is.na(Temp_Fish_Catch1)] <- 1.0 * 10 ^ (-10)
+
+#Value_Data
+Temp_Fish_Value1 <- Kumejima_ALL%>% 
+  # filter(!(Fish_Name_JP %in% Excluded_Fish_Species)) %>%
+  select(Year,Fish_Name_JP,Value_JPY) %>% 
+  group_by(Year,Fish_Name_JP) %>% 
+  summarise(Value = sum(Value_JPY),.groups = "drop") %>% 
+  as.data.frame(as.numeric(Temp_Fish_Value2$Value)) %>% 
+  spread(key = "Fish_Name_JP",value = Value)
+
+Temp_Fish_Value1[is.na(Temp_Fish_Value1)] <- 1.0 * 10 ^ (-10)
+
+
+```
+
+
+
+## Average-CV PE
+```{r}
+# Catch
+Kumejima_AV_CV_PE1 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Catch1,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE1) <- " "
+
+Kumejima_AV_CV_PE1 <- Kumejima_AV_CV_PE1 %>% 
+   gather(key = "Type",value = "PE_Catch") %>% 
+  mutate(Cluclate = "Average-CV PE")
+
+
+#Value
+Kumejima_AV_CV_PE2 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Value1,ci = TRUE))
+
+#names(Ishikawa_AV_CV_PE2) <- " "
+
+Kumejima_AV_CV_PE2 <- Kumejima_AV_CV_PE2 %>% 
+   gather(key = "Type",value = "PE_Value") %>% 
+  mutate(Cluclating = "Average-CV PE")
+
+Kumejima_AV_CV_PE_All <- cbind(Kumejima_AV_CV_PE1,Kumejima_AV_CV_PE2)
+Kumejima_AV_CV_PE_All <- Kumejima_AV_CV_PE_All[c(-3,-4)]
+Kumejima_AV_CV_PE_All <- mutate(Kumejima_AV_CV_PE_All,Data_Source = "久米島")
+Kumejima_AV_CV_PE_All <- Kumejima_AV_CV_PE_All[c(5,4,1,2,3)]
+
+```
+
+
+
+
+## Mean-variance PE
+```{r}
+#Catch
+Kumejima_MV_PE1_liner <- as.data.frame(pe_mv_gaku(Temp_Fish_Catch1,type = "linear"))
+Kumejima_MV_PE1_li_ro <- as.data.frame(pe_mv_gaku(Temp_Fish_Catch1,type = "linear_robust"))
+Kumejima_MV_PE1_qua <- as.data.frame(pe_mv_gaku(Temp_Fish_Catch1[,-114],type = "quadratic"))
+#Kumejima_MV_PE1_li_qua <- as.data.frame(pe_mv_gaku(Temp_Fish_Catch1[,-114],type = "linear_quad_avg"))
+Kumejima_MV_PE1_li_de <- as.data.frame(pe_mv_gaku(Temp_Fish_Catch1[,-114],type = "linear_detrended"))
+Kumejima_MV_PE1_lo_de <- as.data.frame(pe_mv_gaku(Temp_Fish_Catch1[,-114],type = "loess_detrended"))
+
+Kumejima_MV_PE1 <- cbind(Kumejima_MV_PE1_liner,Kumejima_MV_PE1_li_ro,Kumejima_MV_PE1_qua,
+                        Kumejima_MV_PE1_li_de,Kumejima_MV_PE1_lo_de)
+
+names(Kumejima_MV_PE1) <- c("linear","linear_robust","quadratic","linear_detrended","loess_detrended")
+
+Kumejima_MV_PE1 <- Kumejima_MV_PE1 %>% 
+  gather(key = "Type",value = "PE_Catch") %>% 
+  mutate(Cluclating = "Mean-variance PE")
+
+
+#Value
+Kumejima_MV_PE2_liner <- as.data.frame(pe_mv_gaku(Temp_Fish_Value1[,-114],type = "linear"))
+Kumejima_MV_PE2_li_ro <- as.data.frame(pe_mv_gaku(Temp_Fish_Value1[,-114],type = "linear_robust"))
+Kumejima_MV_PE2_qua <- as.data.frame(pe_mv_gaku(Temp_Fish_Value1[,-114],type = "quadratic"))
+#Kumejima_MV_PE2_li_qua <- as.data.frame(pe_mv_gaku(Temp_Fish_Value1[,-114],type = "linear_quad_avg"))
+Kumejima_MV_PE2_li_de <- as.data.frame(pe_mv_gaku(Temp_Fish_Value1[,-114],type = "linear_detrended"))
+Kumejima_MV_PE2_lo_de <- as.data.frame(pe_mv_gaku(Temp_Fish_Value1[,-114],type = "loess_detrended"))
+
+Kumejima_MV_PE2 <- cbind(Kumejima_MV_PE2_liner,Kumejima_MV_PE2_li_ro,Kumejima_MV_PE2_qua,
+                        Kumejima_MV_PE2_li_de,Kumejima_MV_PE2_lo_de)
+
+names(Kumejima_MV_PE2) <- c("linear","linear_robust","quadratic","linear_detrended","loess_detrended")
+
+Kumejima_MV_PE2 <- Kumejima_MV_PE2 %>% 
+  gather(key = "Type",value = "PE_Value") %>% 
+  mutate(Cluclating = "Mean-variance PE")
+
+
+Kumejima_MV_PE_All <- cbind(Kumejima_MV_PE1,Kumejima_MV_PE2)
+
+Kumejima_MV_PE_All <- Kumejima_MV_PE_All[c(-3,-4)]
+Kumejima_MV_PE_All <- Kumejima_MV_PE_All[c(4,1,2,3)]
+
+Kumejima_MV_PE_All <- mutate(Kumejima_MV_PE_All,Data_Source = "久米島")
+Kumejima_MV_PE_All <- Kumejima_MV_PE_All[c(5,1,2,3,4)]
+```
+
+
+
+
+## ２つのPEを表にするため結合
+```{r}
+PE_Kumejima <- rbind(Kumejima_AV_CV_PE_All,Kumejima_MV_PE_All)
+```
+
+
+
+## Average-CV peのプロット
+```{r}
+#Catch
+Kumejima_AV_CV_PE_Vis1 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Catch1,ci = TRUE)) %>% 
+  mutate(Data_Source = "久米島")
+
+Kumejima_Catch_ci_min <- Kumejima_AV_CV_PE_Vis1[1,2]
+Kumejima_Catch_ci_max <- Kumejima_AV_CV_PE_Vis1[2,2]
+
+Kumejima_Catch_ci <- as.data.frame(cbind(Kumejima_Catch_ci_min,Kumejima_Catch_ci_max)) %>% 
+  mutate(Data_Source = "久米島")
+names(Kumejima_Catch_ci) <- c("ci_min","ci_max","Data_Source")
+
+
+#Value
+Kumejima_AV_CV_PE_Vis2 <- as.data.frame(pe_avg_cv_gaku(Temp_Fish_Value1,ci = TRUE)) %>% 
+  mutate(Data_Source = "久米島")
+
+Kumejima_Value_ci_min <- Kumejima_AV_CV_PE_Vis2[1,2]
+Kumejima_Value_ci_max <- Kumejima_AV_CV_PE_Vis2[2,2]
+
+Kumejima_Value_ci <- as.data.frame(cbind(Kumejima_Value_ci_min,Kumejima_Value_ci_max)) %>% 
+  mutate(Data_Source = "久米島")
+names(Kumejima_Value_ci) <- c("ci_min","ci_max","Data_Source")
+
+##############
+
+
+Shade <- as.data.frame(c(x = 2))
+
+
+g23 <- ggplot() + theme_economist() +
+  geom_point(data = Kumejima_AV_CV_PE_Vis1,aes(x = pe,y = Data_Source,
+                                       colour = Data_Source),size = 5) +
+  scale_x_continuous(limits = c(0,8),breaks = seq(0,8,2)) +
+  geom_errorbar(data = Kumejima_Catch_ci,aes(y = Data_Source,xmin = ci_min,
+                                    xmax = ci_max,colour = Data_Source),
+                size = 0.8,height = 0.1) +
+    geom_vline(xintercept = 2) +
+   geom_rect(data = Kumejima_AV_CV_PE_Vis1, aes(xmin = 0, xmax = 2, 
+      ymin = -Inf, ymax = Inf), alpha = 0.1,fill = "red") +
+  labs(x = "多魚種ポートフォリオ効果(Average-CV PE)",y = "水揚量安定貢献") +
+  guides(colour = FALSE) +
+   theme(text = element_text(family = "HiraKakuProN-W3"),
+        axis.title.x = element_text(size=25,vjust = 0,hjust = 0),
+        axis.title.y = element_text(size=25,vjust = 1,hjust = 0.5),
+        axis.text= element_text(size=25),
+       plot.title = element_text(size=25),
+       legend.title = element_text(size= 25),
+       legend.text = element_text(size=25),
+       panel.background=element_rect())
+  
+  g23
+
+  
+  
+g24 <- ggplot() + theme_economist() +
+  geom_point(data = Kumejima_AV_CV_PE_Vis2,aes(x = pe,y = Data_Source,
+                                       colour = Data_Source),size = 5) +
+  scale_x_continuous(limits = c(0,14),breaks = seq(0,14,2)) +
+  geom_errorbar(data = Kumejima_Value_ci,aes(y = Data_Source,xmin = ci_min,
+                                    xmax = ci_max,colour = Data_Source),
+                size = 0.8,height = 0.1) +
+    geom_vline(xintercept = 2) +
+   geom_rect(data = Kumejima_AV_CV_PE_Vis2, aes(xmin = 0, xmax = 2, 
+      ymin = -Inf, ymax = Inf), alpha = 0.1,fill = "red") +
+  labs(x = "多魚種ポートフォリオ効果(Average-CV PE)",y = "水揚高安定貢献") +
+  guides(colour = FALSE) +
+  theme(text = element_text(family = "HiraKakuProN-W3"),
+        axis.title.x = element_text(size=25,vjust = 0,hjust = 0),
+        axis.title.y = element_text(size=25,vjust = 1,hjust = 0.5),
+        axis.text= element_text(size=25),
+       plot.title = element_text(size=25),
+       legend.title = element_text(size= 25),
+       legend.text = element_text(size=25),
+       panel.background=element_rect())
+  
+  g24
+  
+  
+  
+
+```
+
+
+
+
+
+
+

@@ -1,0 +1,867 @@
+---
+title: "EDA ツガイナカ中村漁場を例に"
+date: "`r Sys.Date()`"
+author: "中村洸介"
+output:
+   #css: CustomCSS.css
+  　rmdformats::material:
+    
+    code_folding: hide
+    highlight: kate
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+    md_extensions: -ascii_identifiers
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r knitr_init, echo=TRUE, cache=FALSE}
+library(knitr)
+library(rmdformats)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=TRUE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+# 1準備
+## 1-1 Library読み込む
+```{r echo=TRUE}
+#解析処理に関するセットアップ、パッケージの読み込みなど
+rm(list = ls(all=TRUE))
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(ggsci)
+#library(gdata)
+library(DT)
+#library(xtable)
+library(magrittr)
+library(ggrepel)
+#library(plotly)
+#library(viridis)
+#library(zeallot)
+
+```
+
+ここではEDAの実例として椴法華ツガイナカ中村漁場のデータを用いて実際にEDAを行っていく。
+EDAとは、本格的な分析に移る前に、自分が対象にしているデータセットの情報を詳しく捉えていくものである。
+従来は、予めモデルを要旨してデータを当てはめることで確率計算を行なってきたが、現実データの構造の複雑性からモデルの修正などが必要になる可能性が高い。
+
+データ分析は、対象としているデータがどのような意図で作成されたか、集計方法に誤りがないか、データ内における注意点は何かといったデータに対する情報や知見を理解する必要があり、これらのデータの情報や知見の理解が精度の高いデータ分析につながるからである。
+
+
+
+#対象データの読み込み
+```{r}
+Main <- readRDS("./Working_Data/Todohokke/Todohokke_Setnet_2008~2019.rds")
+
+
+Main$Year <- as.integer(Main$Year)
+Main$Month <- as.integer(Main$Month)
+
+Main <- as_tibble(Main)
+
+options(scipen=100000)　#指数表示を避けるコード
+```
+
+Q,データの総数
+A,50389
+
+
+
+
+#データの大きさ
+```{r}
+dim(Main)
+```
+
+Q,データの大きさは？
+A,本データは行数50389、列数18のデータフレームである。
+
+
+#各列の情報
+```{r}
+glimpse(Main)
+```
+Q,各列の情報は？
+A,本データは18列（変数）がある。
+　データ型にはfactor,integral,numeric,dateがある。
+
+
+
+
+#データの要約統計量
+```{r}
+summary(Main)
+```
+
+
+
+
+#データ数の表示
+```{r}
+#月ごとの魚種のデータ数
+Cross_Table_0 <- Main %>%
+  xtabs(~FishSpecies+Month, .)
+Cross_Table_0 <- as.data.frame(Cross_Table_0)
+
+datatable(Cross_Table_0)
+
+#年別の魚種のデータ酢
+Cross_Table_1 <- Main %>%
+  xtabs(~FishSpecies+Year, .)
+Cross_Table_1 <- as.data.frame(Cross_Table_1)
+
+datatable(Cross_Table_1)
+
+#魚種ごとのデータ数
+Cross_Table_2 <- Main %>%
+  xtabs(~FishSpecies, .)
+Cross_Table_2 <- as.data.frame(Cross_Table_2)
+
+datatable(Cross_Table_2)
+
+#年別月別の魚種ごとのデータ数
+Cross_Table_3 <- Main %>%
+  xtabs(~FishSpecies+Year+Month, .) 
+Cross_Table_3 <- as.data.frame(Cross_Table_3)
+
+datatable(Cross_Table_3)
+
+#月別データ数
+Cross_Table_4 <- Main %>%
+  xtabs(~Month, .) 
+Cross_Table_4 <- as.data.frame(Cross_Table_4)
+
+datatable(Cross_Table_4)
+
+#年別データ数
+Cross_Table_5 <- Main %>%
+  xtabs(~Year, .) 
+Cross_Table_5 <- as.data.frame(Cross_Table_5)
+
+datatable(Cross_Table_5)
+
+```
+
+
+魚種数は116
+期間は2008年~2019年
+
+
+```{r}
+Fish_Species <- Cross_Table_2 %>% 
+    arrange(desc(Freq)) %>% 
+    mutate(Num = 1:116)
+
+Fish_Name_Order <- c("するめいか","ぶり","あんこう","ほっけ","さけオス","さけメス","ながら","ひらめ","本まぐろ","いなだ","さば",
+                     "まだら","さくらます","ふくらぎ","みずいか","活ひらめ" ,"まかすぺ","そうはち","ときしらず","がや","まつかわがれい",
+                     "めじまぐろ","とうべつかじか","ばばがれい","その他鮮魚","まぞい","活〆ぶり","さわら","いわし","柳だこ","かわはぎ",
+                     "とらふぐ","あおます","にしん","その他さけ", "はも","いしがれい","なめたがれい","活だこ","あぶらこ","まだい","すけそう",
+                     "ふぐ","まとうだい","その他いか","みずくさがれい","その他ます","まがれい", "あかいか","さめがれい","びっき","あぶらざめ",
+                     "どんこ","すずき","さんま","もかざめ","なべかじか","銀さけ","あさばがれい","ますのすけ","ひらまさ","すながれい","活ながら" ,
+                     "ごっこオス","しいら","ほうぼう","かがみだい","たなご","まんぼう","めだい","かわがれい","しまほっけ","あじ","くろがしら",
+                     "けいじ","かながしら","めばる","もんき","むらさきいか","その他ぶり", "生だこ","まだら別","ごっこメス","その他こなご","だっく",
+                     "まふぐ","その他いわし","いか沖漬け", "えぞかすぺ","べろかじか","その他かれい","活あぶらこ","あなご","ほっかいあぶらこ","ミンク鯨",
+                     "したびらめ","その他まぐろ","はっかく","まこがれい","まだらキズ","ぎすかじか","めぬき","かに","大女子","エチオピア","網ほっけ",
+                     "あぶらがれい","ごまふぐ","その他さめ","いしなぎ","その他かすぺ","水だこ","そうだがつお","さくらます活〆","タチウオ","水ダコ")
+
+
+Fish_Species <- transform(Fish_Species,FishSpecies = factor(FishSpecies,levels = Fish_Name_Order))
+
+    
+g1 <- ggplot(Fish_Species,aes(x = FishSpecies,y = Freq)) +
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+    geom_bar(stat = "identity") +
+    labs(x = "FishSpecies") +
+    coord_flip()
+    
+
+g1
+
+```
+
+
+
+
+魚種別のデータ数（上位10魚種  
+1,スルメイカ　：6138  
+2,ブリ　　　　：5786  
+3,アンコウ　　：4392  
+4,ホッケ　　　：3730  
+5,サケオス　　：3226  
+6,サケメス　　：3065  
+7,ナガラ　　　：2851  
+8,ヒラメ　　　：1829  
+9,本マグロ　　：1720  
+10,イナダ　　 ：1551  
+
+
+
+
+
+# 月ごとのデータ頻度
+```{r}
+Monthly_Data = Cross_Table_4 %>% 
+  group_by(Month) %>% 
+  summarise(Freq = sum(Freq))
+
+g2 <- ggplot(Monthly_Data) +
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+  aes(x = Month,y = Freq) +
+  geom_bar(stat = "identity") +
+  labs(x = "月",y = "データ数") 
+
+g2
+```
+
+4月から10月にかけてピークが来ている。
+11月からは減少傾向にある。
+
+
+#年別データ数
+```{r}
+Yearly_Data = Cross_Table_5 %>% 
+  group_by(Year) %>% 
+  summarise(Freq = sum(Freq))
+
+g3 <- ggplot(Yearly_Data) +
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+  aes(x = Year,y = Freq) +
+  geom_bar(stat = "identity") +
+  labs(x = "年",y = "データ数") 
+
+g3
+```
+
+年別データ数は2008年から2014年まではほぼ横ばい
+2015年からはやや増加している
+
+
+#  魚種ごとの漁獲の季節性
+##  スルメイカ
+```{r}
+Squid_Monthly = Cross_Table_0 %>%
+  filter(FishSpecies == "するめいか") 
+
+g4 <- ggplot(Squid_Monthly) +
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+  aes(x = Month,y = Freq) +
+  geom_bar(stat = "identity") +
+  labs(x = "月",y = "データ数") 
+
+g4
+
+```
+
+個人的なイメージとして１０月・１１月がデータ数が多くなると思ったが、７月のデータ数が最も多かった。
+だが全体的に夏から秋にかけてデータ数が多くなる。
+
+
+## ブリ
+```{r}
+Yellowtail_Monthly = Cross_Table_0 %>% 
+  filter(FishSpecies == "ぶり")
+
+g5 <- ggplot(Yellowtail_Monthly) +
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+  aes(x = Month,y = Freq) +
+  geom_bar(stat = "identity") +
+  labs(x = "月",y = "データ数") 
+
+g5
+
+```
+
+ブリの漁獲が多くなるのは冬だと思ってたが椴法華は秋である９月・１０月がデータ数が最も多い。
+
+
+## イナダ
+```{r}
+Middle_Yellowtail_Monthly = Cross_Table_0 %>% 
+  filter(FishSpecies == "いなだ")
+
+g6 <- ggplot(Middle_Yellowtail_Monthly) +
+ theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+  aes(x = Month,y = Freq) +
+  geom_bar(stat = "identity") +
+  labs(x = "月",y = "データ数") 
+g6
+
+```
+
+イナダもブリと同様に９月・１０月にデータ数が最も多い。
+
+
+
+## サケオス
+```{r}
+Chum_Salmon_M_Monthly = Cross_Table_0 %>% 
+  filter(FishSpecies == "さけオス")
+
+g7 <- ggplot(Chum_Salmon_M_Monthly) +
+ theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+  aes(x = Month,y = Freq) +
+  geom_bar(stat = "identity") +
+  labs(x = "月",y = "データ数")
+
+g7
+```
+
+サケはイメージ通り秋である９〜１０月に漁獲が多いものと思われる。
+
+
+## サケメス
+```{r}
+Chum_Salmon_F_Monthly = Cross_Table_0 %>% 
+  filter(FishSpecies == "さけメス")
+
+g8 <- ggplot(Chum_Salmon_F_Monthly) +
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue")) +
+  aes(x = Month,y = Freq) +
+  geom_bar(stat = "identity") +
+  labs(x = "月",y = "データ数") 
+
+g8
+
+```
+
+サケはイメージ通り秋である９〜１０月に漁獲が多いものと思われる。
+
+
+
+
+#漁獲量
+## 年間漁獲量・漁獲高
+```{r}
+source("Todohokke_Setnet_Function.R")
+
+Yearly_Catch_Value <- Main %>% 
+    fun_Catch_Value(Catch,Value)
+
+
+g9 <- ggplot(Yearly_Catch_Value) +
+  aes(x = Year,y = Total_Catch,colour = "漁獲量") +
+  geom_line() + geom_point() +
+   scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,3000,500)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲量（トン）") +
+  guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g9
+ 
+g10 <- ggplot(Yearly_Catch_Value) +
+  aes(x = Year,y = Total_Value,colour = "漁獲高") +
+  geom_line() + geom_point() +
+  scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,450,50)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲高（百万円）") +
+   guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g10
+
+
+g9 <- ggplot(Yearly_Catch_Value) +
+  aes(x = Year,y = Total_Catch,fill = "漁獲量") +
+ geom_bar(stat = "identity") +
+   scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,3000,500)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲量（トン）") +
+  guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g9
+ 
+g10 <- ggplot(Yearly_Catch_Value) +
+  aes(x = Year,y = Total_Value,fill = "漁獲高") +
+ geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,450,50)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲高（百万円）") +
+  guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g10
+
+```
+
+
+漁獲量は2008年から2012年位かけて右肩下がり、そのご2014年位かけて右肩上がりに増加し、2017年にかけて再び減少している。
+2018年、2019年はわずかであるが増加している。
+
+漁獲高は2019年は漁獲量が増加していたのにかかわらず、漁獲高は本データ内において最低の値を叩き出している。
+
+
+
+
+#2019年の漁獲割合
+```{r}
+Working_Data <- Main %>% 
+  filter(Year == 2019) %>% 
+  group_by(en) %>% 
+  summarise(Total_Catch = sum(Catch)/1000,
+            Total_Value = sum(Value)/1000000) %>% 
+    mutate(Percentage_Catch = (Total_Catch/sum(Total_Catch))*100,
+           Percentage_Value = (Total_Value/sum(Total_Value))*100) %>% 
+  arrange(desc(Percentage_Catch))
+  
+```
+
+
+各年の漁獲割合
+```{r}
+source("Todohokke_Setnet_Function.R")
+
+
+Main$en <- as.character(Main$en)
+Fish_Rate <- fun_Fish_Rate(Main,Catch,Value)
+  
+g11 = ggplot(Fish_Rate,aes(fill = en,y = Percentage_Catch, x = Year)) +
+  theme_light(base_rect_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲量の割合") +
+  geom_bar(stat = "identity",position = "fill",width = 0.6) +
+  scale_fill_hue(name = "魚種名",
+                 labels = c(Chum_Salmon_F = "さけメス",
+                            Chum_Salmon_M = "さけオス",
+                            Japanese_Common_Squid = "するめいか",
+                            Yellowtail = "ぶり",
+                            Middle_Yellowtail = "いなだ",
+                            Chub_Mackerel = "さば",
+                            Okhotsk_Atka_Mackerel = "ほっけ",
+                            Small_Yelllowtail = "ふくらぎ",
+                            others = "その他")) +
+  scale_x_continuous(breaks = seq(2008,2019,2))
+  
+ g12 = ggplot(Fish_Rate,aes(fill = en,y = Percentage_Value, x = Year)) +
+theme_light(base_rect_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲高の割合") +
+  geom_bar(stat = "identity",position = "fill",width = 0.6) +
+ scale_fill_hue(name = "魚種名",
+                 labels = c(Chum_Salmon_F = "さけメス",
+                            Chum_Salmon_M = "さけオス",
+                            Japanese_Common_Squid = "するめいか",
+                            Yellowtail = "ぶり",
+                            Middle_Yellowtail = "いなだ",
+                            Chub_Mackerel = "さば",
+                            Okhotsk_Atka_Mackerel = "ほっけ",
+                            Small_Yelllowtail = "ふくらぎ",
+                            others = "その他")) +
+  scale_x_continuous(breaks = seq(2008,2019,2))
+  
+ 
+ g11
+ g12
+
+```
+
+2008年から2014年にかけてスルメイカが漁獲割合の多くを占めていることがわかる。
+2012年ごろからブリの漁獲割合が増加してきて、2015年ではイナダも増加してきている。
+2015年ではスルメイカの漁獲割合が激減して、ブリ、イナダが主要魚種として現れている。
+2018年もブリとイナダが主要魚種として現れている。
+2019年は漁獲量割合の半分以上がサバに占められている。
+漁獲量割合の多くがサバなので、単価が低く、漁獲高の方はブリ、スルメイカが多くを占めている。
+2019年は漁獲量が増加したが、漁獲高が大きく減少していた。
+理由としては、単価の低いサバが多く漁獲されたことが原因であることがわかった。
+
+
+
+
+# HHI
+```{r}
+source("Todohokke_Setnet_Function.R")
+
+Yearly_HHI = fun_HHI(Main,Catch,Value)
+Yearly_HHI$Year = as.integer(Yearly_HHI$Year)
+
+
+EffectA=1.5
+
+
+
+g13 <- ggplot(Yearly_HHI, aes(x = Sum_HHI_Catch,y = Sum_HHI_Value,color = Year,label=(Year)))+
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue"))+
+       geom_point(aes(size = Total_Catch),alpha=.7) +
+       scale_colour_gradient(name="年",low = "yellow", high = "blue",
+                        breaks = seq(2008, 2019,by=1),
+                        labels = seq(2008, 2019,by=1)) +
+  geom_abline(intercept = 0,slope = 1,linetype = "dotted") +
+  labs(x = "漁獲量（HHI）",y = "漁獲高（HHI）",
+       size="年間漁獲量(トン)") +
+  scale_x_continuous(breaks = seq(0,8000,1000)) +
+  scale_y_continuous(breaks = seq(0,8000,1000))+
+   expand_limits(x = 0) +
+   expand_limits(y = 0) +
+theme( axis.title = element_text(size=15, face="bold"),
+       axis.text= element_text(size=12, face="bold"),
+       plot.title = element_text(size=15, face="bold"),
+       legend.title = element_text(size=12, face="bold"),
+       legend.text=element_text(face="bold"))+
+  scale_radius(range=c(15/EffectA,45/EffectA)) +
+ geom_text_repel(colour="salmon4")
+
+
+g13
+
+```
+
+
+2008年は漁獲割合のグラフからスルメイカが漁獲の８割状を占めていたためにHHIが非常に大きい値となっている。
+2019年は漁獲量の割合の半分以上がサバであったために、漁獲量のHHIの値が大きくなっている。
+
+
+
+
+# シンプソン指数λ
+```{r}
+source("Todohokke_Setnet_Function.R")
+
+Yearly_Simpson = fun_Simpson(Main,Catch,Value)
+Yearly_Simpson$Year = as.integer(Yearly_Simpson$Year)
+
+
+
+EffectA=1.5
+
+
+g14 <- ggplot(Yearly_Simpson, aes(x = Simpson_Catch,y = Simpson_Value,color = Year, label=(Year)) )+
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue"))+
+       geom_point(aes(size = Catch),alpha=.7) +
+       scale_colour_gradient(name="年",low = "yellow", high = "blue",
+                        breaks = seq(2008, 2017,by=1),
+                        labels = seq(2008, 2017,by=1)) +
+  geom_abline(intercept = 0,slope = 1,linetype = "dotted") +
+  labs(x = "漁獲量（λ）",y = "漁獲高（λ）",title = "定置網における漁獲量・漁獲高のλ",
+       size="年間漁獲量(トン)") +
+  scale_x_continuous(limits = c(0,6)) +
+  scale_y_continuous(limits = c(0,6))+
+theme( axis.title = element_text(size=15, face="bold"),
+       axis.text= element_text(size=12, face="bold"),
+       plot.title = element_text(size=15, face="bold"),
+       legend.title = element_text(size=12, face="bold"),
+       legend.text=element_text(face="bold"))+
+  scale_radius(range=c(15/EffectA,45/EffectA))+ #  adjust scale effects 
+geom_text_repel(colour="salmon4")
+
+g14
+
+```
+2019年のサバの大量漁獲により漁獲量のλが減少しているのがわかる。
+2019年の漁獲高のλが増加しているのは、2018年の漁獲高の割合のほとんどが、ブリ、イナダ、スルメイカで占められており、
+2019年は、ぶりを抑えてサバの漁獲高の割合が増加したことが原因である。
+
+
+
+
+#  シャノン指数H'
+```{r}
+source("Todohokke_Setnet_Function.R")
+
+Yearly_Shannon = fun_Shannon(Main,Catch,Value)
+Yearly_Shannon$Year <- as.integer(Yearly_Shannon$Year)
+
+###   kohwork
+
+EffectA=1.5
+
+
+
+g15 <- ggplot(Yearly_Shannon, aes(x = Shannon_Catch,y = Shannon_Value,color = Year, label=(Year)) )+
+  theme(text = element_text(family = "HiraKakuProN-W3"),panel.background=element_rect(fill="skyblue"))+
+       geom_point(aes(size = Catch),alpha=.7) +
+       scale_colour_gradient(name="年",low = "yellow", high = "blue",
+                        breaks = seq(2008, 2017,by=1),
+                        labels = seq(2008, 2017,by=1)) +
+  geom_abline(intercept = 0,slope = 1,linetype = "dotted") +
+  labs(x = "漁獲量（H'）",y = "漁獲高（H'）",title = "定置網における漁獲量・漁獲高のH'",
+       size="年間漁獲量(トン)") +
+  scale_x_continuous(limits = c(0,3.5)) +
+  scale_y_continuous(limits = c(0,3.5))+
+theme(axis.title = element_text(size=15, face="bold"),
+       axis.text= element_text(size=12, face="bold"),
+       plot.title = element_text(size=15, face="bold"),
+       legend.title = element_text(size=12, face="bold"),
+       legend.text=element_text(face="bold"))+
+  scale_radius(range=c(15/EffectA,45/EffectA))+ #  adjust scale effects 
+geom_text_repel(colour="salmon4")
+
+g15
+```
+
+2019年のサバの大量漁獲により漁獲量のH’が減少しているのがわかる。
+2019年の漁獲高のH’が増加しているのは、2018年の漁獲高の割合のほとんどが、ブリ、イナダ、スルメイカで占められており、
+2019年は、ぶりを抑えてサバの漁獲高の割合が増加したことが原因である。
+
+
+
+#サバの分析
+```{r}
+#サバを抜き出したデータセット
+Mackerel_Data <- Main %>% 
+  filter(en == "Chub_Mackerel")
+
+```
+
+
+
+
+##年間漁獲量・漁獲高
+```{r}
+Mackerel_Catch_Value1 <- Mackerel_Data %>% 
+  group_by(Year) %>% 
+  summarise( Total_Catch = sum(Catch)/1000,
+            Total_Value = sum(Value)/1000000) 
+
+
+g16 <- ggplot(Mackerel_Catch_Value1) +
+  aes(x = Year,y = Total_Catch,colour = "漁獲量") +
+  geom_line() + geom_point() +
+   scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,850,100)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲量（トン）") +
+   guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g16
+ 
+g17 <- ggplot(Mackerel_Catch_Value1) +
+  aes(x = Year,y = Total_Value,colour = "漁獲高") +
+  geom_line() + geom_point() +
+  scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,25,5)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲高（百万円）") +
+   guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g17
+
+
+g16 <- ggplot(Mackerel_Catch_Value1) +
+  aes(x = Year,y = Total_Catch,fill = "漁獲量") +
+  geom_bar(stat = "identity") +
+   scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,850,100)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲量（トン）") +
+  guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g16
+
+
+g17 <- ggplot(Mackerel_Catch_Value1) +
+  aes(x = Year,y = Total_Value,fill = "漁獲高") +
+  geom_bar(stat = "identity") +
+   scale_x_continuous(breaks = seq(2008,2019,2)) +
+    scale_y_continuous(breaks = seq(0,25,5)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "年",y = "漁獲高（百万円）") +
+  guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g17
+```
+
+
+
+
+##月間漁獲量・漁獲高
+```{r}
+Mackerel_Catch_Value2 <- Mackerel_Data %>% 
+  group_by(Month) %>% 
+  summarise( Total_Catch = sum(Catch)/1000,
+            Total_Value = sum(Value)/1000000) 
+
+
+g18 <- ggplot(Mackerel_Catch_Value2) +
+  aes(x = Month,y = Total_Catch,colour = "漁獲量") +
+  geom_line() + geom_point() +
+   scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,850,100)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲量（トン）") +
+   guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g18
+
+
+g19 <- ggplot(Mackerel_Catch_Value2) +
+  aes(x = Month,y = Total_Value,colour = "漁獲高") +
+  geom_line() + geom_point() +
+  scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,15,3)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲高（百万円）") +
+   guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g19
+
+
+g18 <- ggplot(Mackerel_Catch_Value2) +
+  aes(x = Month,y = Total_Catch,fill = "漁獲量") +
+  geom_bar(stat = "identity") +
+   scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,850,100)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲量（トン）") +
+   guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g18
+
+
+g19 <- ggplot(Mackerel_Catch_Value2) +
+  aes(x = Month,y = Total_Value,fill = "漁獲高") +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,15,3)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲高（百万円）") +
+   guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g19
+
+```
+
+
+
+##2019年の漁獲量
+```{r}
+Mackerel_Catch_Value_2019 <- Mackerel_Data %>% 
+  filter(Year == 2019) %>% 
+  group_by(Month) %>% 
+  summarise( Total_Catch = sum(Catch)/1000,
+            Total_Value = sum(Value)/1000000) 
+
+
+g20 <- ggplot(Mackerel_Catch_Value_2019) +
+  aes(x = Month,y = Total_Catch,colour = "漁獲量") +
+  geom_line() + geom_point() +
+   scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,850,100)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲量（トン）") +
+   guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g20
+ 
+g21 <- ggplot(Mackerel_Catch_Value_2019) +
+  aes(x = Month,y = Total_Value,colour = "漁獲高") +
+  geom_line() + geom_point() +
+  scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,15,3)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲高（百万円）") +
+   guides(colour = FALSE) +
+  expand_limits(y = 0)
+
+g21
+
+
+g22 <- ggplot(Mackerel_Catch_Value_2019) +
+  aes(x = Month,y = Total_Catch,fill = "漁獲量") +
+  geom_bar(stat = "identity") +
+   scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,850,100)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲量（トン）") +
+   guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g22
+ 
+g23 <- ggplot(Mackerel_Catch_Value_2019) +
+  aes(x = Month,y = Total_Value,fill = "漁獲高") +
+   geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = seq(4,12,1)) +
+    scale_y_continuous(breaks = seq(0,15,3)) +
+  theme_light(base_size = 15,base_family = "HiraKakuProN-W3") +
+  labs(x = "月",y = "漁獲高（百万円）") +
+   guides(fill = FALSE) +
+  expand_limits(y = 0)
+
+g23
+
+```
+
+
+
+
+##単価
+```{r}
+summary(Mackerel_Data$UnitPrice)
+
+
+g22 <- ggplot(Mackerel_Data) +
+  aes(x = en,y = UnitPrice) +
+  geom_boxplot() +
+  geom_jitter() +
+  scale_y_continuous(breaks = seq(0,900,50))
+
+
+g22
+
+
+g22 <- ggplot(Mackerel_Data) +
+  aes(x = en,y = log(UnitPrice)) +
+  geom_boxplot() +
+  geom_jitter() #+
+  #scale_y_continuous(breaks = seq(0,900,50))
+
+
+g22
+
+```
+
+
+単価は最低が3円で、最高が950円だった。
+中央値が30円で、平均値が77円で単価ので０他の多くが低い金額であることがわかる。
+
+箱ひげ図は0円から100円の間に最も集中しており、100円から450円の間が次いで集中している。
+500円から上はプロットがまばらなっており、サバは低い単価で取引されていることが多いのが伺える。
+
+
+
+```{r}
+g23 <- ggplot(Mackerel_Data) +
+  aes(x = Year,y = UnitPrice,colour = en) +
+  geom_point() +
+  scale_x_continuous(breaks = seq(2008,2019,2)) +
+  scale_y_continuous(breaks = seq(0,1000,50))
+  
+g23
+```
+
+
+
+
+
+
+

@@ -1,0 +1,17 @@
+漁業種,Fishery_Type
+漁業（その他）,zother_fishery
+刺網,gillnet
+定置網（知事許可）,setnet
+潜り（採貝・採藻を除く）,diving
+釣り（カツオ・マグロ以外）,pole_and_line
+カツオ・マグロ漁業,fishery_skipjack_tuna
+まち類・底魚一本釣（知事許可）,bottom_pole_and_line
+かご網,trap
+いか釣,squid_jigging
+底はえ縄,bottom_longline
+追込網（知事許可）,drive_in_net
+まぐろはえ縄（大臣許可）,tuna_longline_minister
+敷網（追込網を含む）,lift_net
+まぐろはえ縄（知事許可）,tuna_longline_governor
+セーイカ釣,squid_fishing
+養殖,aquaculture
